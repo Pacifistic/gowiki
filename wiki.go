@@ -19,11 +19,7 @@ var pageLink = regexp.MustCompile("\\[([a-zA-Z0-9]+)\\]")
 
 func (p *Page) save() error {
 	filename := "data/" + p.Title + ".txt"
-	body := pageLink.ReplaceAllFunc(p.Body, func(s []byte) []byte {
-		m := string(s[1 : len(s)-1])
-		return []byte("<a href=\"/view/" + m + "\">" + m + "</a>")
-	})
-	return os.WriteFile(filename, body, 0600)
+	return os.WriteFile(filename, p.Body, 0600)
 }
 
 func loadPage(title string) (*Page, error) {
@@ -48,6 +44,10 @@ func viewHandler(w http.ResponseWriter, r *http.Request, title string) {
 		http.Redirect(w, r, "/edit/"+title, http.StatusFound)
 		return
 	}
+	p.Body = pageLink.ReplaceAllFunc(p.Body, func(s []byte) []byte {
+		m := string(s[1 : len(s)-1])
+		return []byte("<a href=\"/view/" + m + "\">" + m + "</a>")
+	})
 	renderTemplate(w, "view", p)
 }
 
