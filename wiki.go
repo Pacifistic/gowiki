@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"os"
 	"regexp"
+	"strings"
 	"text/template"
 )
 
@@ -15,7 +16,7 @@ type Page struct {
 
 var templates = template.Must(template.ParseFiles("tmpl/edit.html", "tmpl/view.html"))
 var validPath = regexp.MustCompile("^/(edit|save|view)/([a-zA-Z0-9]+)$")
-var pageLink = regexp.MustCompile("\\[([a-zA-Z0-9]+)\\]")
+var pageLink = regexp.MustCompile("\\[([a-zA-Z0-9 ]+)\\]\\(([a-zA-Z0-9]+)\\)")
 
 func (p *Page) save() error {
 	filename := "data/" + p.Title + ".txt"
@@ -45,8 +46,9 @@ func viewHandler(w http.ResponseWriter, r *http.Request, title string) {
 		return
 	}
 	p.Body = pageLink.ReplaceAllFunc(p.Body, func(s []byte) []byte {
-		m := string(s[1 : len(s)-1])
-		return []byte("<a href=\"/view/" + m + "\">" + m + "</a>")
+		name := string(s[1:strings.Index(string(s), "]")])
+		link := string(s[strings.Index(string(s), "(")+1 : len(s)-1])
+		return []byte("<a href=\"/view/" + link + "\">" + name + "</a>")
 	})
 	renderTemplate(w, "view", p)
 }
